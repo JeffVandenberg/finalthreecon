@@ -1,0 +1,5 @@
+#AuthType Basic
+#AuthName "Restricted Access"
+#AuthUserFile /home/clocktow/events.clocktowercon.com/.htpasswd
+#Require valid-user
+

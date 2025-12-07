@@ -1,0 +1,14 @@
+# Ignore sensitive secrets (do not commit real secrets)
+config/secrets.php
+config/secrets.local.php
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+vendor/
+
+# instance specific files
+refresh_time**
+last_db_version
