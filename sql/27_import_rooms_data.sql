@@ -1,0 +1,25 @@
+insert into rooms (id, name, description, relationships, date_created, date_updated)
+values  ('6265AC7A-DB67-11EF-9B27-E0459912A9C6', 'Statler Room -B', null, '[]', '2025-01-25 21:57:35', '2025-01-26 17:58:18'),
+        ('73C65146-CB9E-11EF-AB9A-CE07A2A4C705', 'Palmer House', null, '[]', '2025-01-05 19:51:28', '2025-01-26 17:58:19'),
+        ('7D6DCC86-DBE5-11EF-B4A3-0D459912A9C6', 'Beverly Room - TV', null, '[]', '2025-01-26 13:00:17', '2025-01-26 17:58:19'),
+        ('805C4D92-DC11-11EF-B856-CC5506B76CE1', 'Stevens B', null, '[]', '2025-01-26 18:15:19', '2025-01-26 19:06:47'),
+        ('8065EC0E-790A-11EF-AEA2-A70474E7C6D9', 'Hilton South Entrance', 'The Southern entrance into Hilton McLean Tysons Corner hotel.', '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('806B2CBE-790A-11EF-AEA2-A70474E7C6D9', 'Atrium', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:18'),
+        ('806E9C46-790A-11EF-AEA2-A70474E7C6D9', 'International Ballroom-A', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('80724116-790A-11EF-AEA2-A70474E7C6D9', 'Continental Ballroom-A', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('8079A2C6-790A-11EF-AEA2-A70474E7C6D9', 'International Foyer', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:20'),
+        ('807CBC90-790A-11EF-AEA2-A70474E7C6D9', 'Dallas Room', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:18'),
+        ('8080308C-790A-11EF-AEA2-A70474E7C6D9', 'Fowler Room', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('808393C6-790A-11EF-AEA2-A70474E7C6D9', 'Continental Ballroom-A-TV', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:20'),
+        ('8086CB40-790A-11EF-AEA2-A70474E7C6D9', 'Hilton Amphitheater', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('808A1FCA-790A-11EF-AEA2-A70474E7C6D9', 'Stevens A Room', null, '[]', '2024-09-22 17:45:48', '2025-01-26 18:14:30'),
+        ('8090EFD0-790A-11EF-AEA2-A70474E7C6D9', 'Statler Room -A', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('8095D856-790A-11EF-AEA2-A70474E7C6D9', 'Mrs Jo''s Petite Eats  Patisserie & Cafe', 'Mrs. Jo''s Petite Eats was founded by Chef Erinn Roth and is a great patisserie and cafe that is Woman and Veteran owned located in McLean, Virginia.
+
+This was an attendee favorite last year and we''re pleased to announce that they will be open for brunch o', '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('80992F88-790A-11EF-AEA2-A70474E7C6D9', 'Innovation Gallery', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('80A00A24-790A-11EF-AEA2-A70474E7C6D9', 'Continental Ballroom-B', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:19'),
+        ('80A3392E-790A-11EF-AEA2-A70474E7C6D9', 'Beverly Room', null, '[]', '2024-09-22 17:45:48', '2025-01-26 18:13:32'),
+        ('80A6C88C-790A-11EF-AEA2-A70474E7C6D9', 'Continental Ballroom-C', null, '[]', '2024-09-22 17:45:48', '2025-01-26 17:58:20'),
+        ('83813D1C-CB9E-11EF-B133-18D815F3C867', 'Hilton Honors', null, '[]', '2025-01-05 19:51:54', '2025-01-26 17:58:19'),
+        ('A089B21C-DC11-11EF-B809-682504AC08AA', 'Stevens A TV', null, '[]', '2025-01-26 18:16:13', '2025-01-26 18:18:57');
