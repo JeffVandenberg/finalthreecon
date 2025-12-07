@@ -1,0 +1,30 @@
+{
+  "name": "final_three_con/clocktowercon",
+  "version": "1.0.1",
+  "description": "description",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "JeffV",
+      "email": "email@example.com"
+    }
+  ],
+  "require": {
+    "ext-json": "*",
+    "ext-mysqli": "*",
+    "guzzlehttp/guzzle": "7.8.1",
+    "ext-pdo": "*",
+    "hubspot/api-client": "11.0.0",
+    "google/apiclient": "^2.15.0"
+  },
+  "scripts": {
+    "pre-autoload-dump": "Google\\Task\\Composer::cleanup"
+  },
+  "extra": {
+    "google/apiclient-services": [
+      "Drive",
+      "Sheets"
+    ]
+  }
+}
