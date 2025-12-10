@@ -82,7 +82,7 @@ foreach ($events as $row) {
 
 $f = fopen('refresh_time_badges', 'w+');
 fwrite($f, date('Y-m-d H:i:s'));
-fclose($
+fclose($f);
 
 // DONE!
 header('Location: ./index.php');
