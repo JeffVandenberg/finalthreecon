@@ -7,6 +7,7 @@
  * - Applies timezone and error display based on environment
  */
 
+echo '<pre>';
 // Load Composer autoloader
 $autoloadPath = __DIR__ . '/../vendor/autoload.php';
 if (file_exists($autoloadPath)) {
@@ -27,12 +28,12 @@ $appConfigPath = __DIR__ . '/../config/app.php';
 if (file_exists($appConfigPath)) {
     $__APP_CONFIG = require $appConfigPath;
 }
-
+print_r($__APP_CONFIG);
 $secretsPath = __DIR__ . '/../config/secrets.php';
 if (file_exists($secretsPath)) {
     $__APP_SECRETS = require $secretsPath;
 }
-
+print_r($__APP_SECRETS);
 // Dot-notation array getter
 if (!function_exists('clocktower_array_get')) {
     function clocktower_array_get(array $array, string $key, $default = null) {

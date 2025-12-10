@@ -1,7 +1,8 @@
 <?php
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/core/bootstrap.php';
 require_once './cache_bust.php';
 
+$conventionUrl = config('tte.convention_url');
 $pdoConn = require_once 'db_connect.php';
 /* @var $pdoConn PDO */
 
@@ -63,7 +64,7 @@ $result = $pdoConn->query($reportSql);
     <tbody>
     <?php while($row = $result->fetch(PDO::FETCH_ASSOC)): ?>
     <tr>
-        <td><a href="https://tabletop.events/conventions/final-three-con-2026/badges/<?=$row['badge_id'] ?>" target="_blank"><?= $row['badge_number']; ?></a></td>
+        <td><a href="https://tabletop.events/conventions/<?= $conventionUrl ?>/badges/<?=$row['badge_id'] ?>" target="_blank"><?= $row['badge_number']; ?></a></td>
         <td><?= $row['commenter_name']; ?></td>
         <td><?= $row['comment']; ?></td>
         <td><?= $row['type']; ?></td>

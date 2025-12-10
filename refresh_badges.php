@@ -1,19 +1,20 @@
 <?php
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/core/bootstrap.php';
 
 // login
 $client = new GuzzleHttp\Client();
 
 $loginResponse = $client->post('https://tabletop.events/api/session', [
     'form_params' => [
-        'username' => 'jeffvandenberg',
-        'password' => 'PkExxDxPI5jCT7xp!KDi50Sdc!n',
-        'api_key_id' => '732CF58A-930F-11F0-AB91-06778B8BBAF3',
+        'username' => secret('tte.api_user'),
+        'password' => secret('tte.api_password'),
+        'api_key_id' => secret('tte.api_key'),
     ]
 ]);
 
 $loginData = json_decode($loginResponse->getBody()->getContents(), true);
 $sessionId = $loginData['result']['id'];
+$conventionId = config('tte.convention_id');
 
 // get events
 $hasMoreData = true;
@@ -22,7 +23,7 @@ $events = [];
 
 while ($hasMoreData) {
     // get request
-    $eventResponse = $client->get('https://tabletop.events/api/convention/D46EFC1C-696B-11F0-B23F-52367E479804/badges', [
+    $eventResponse = $client->get('https://tabletop.events/api/convention/' . $conventionId . '/badges', [
         'query' => [
             'session_id' => $sessionId,
             '_include_relationships' => 1,
@@ -81,7 +82,7 @@ foreach ($events as $row) {
 
 $f = fopen('refresh_time_badges', 'w+');
 fwrite($f, date('Y-m-d H:i:s'));
-fclose($f);
+fclose($
 
 // DONE!
 header('Location: ./index.php');
