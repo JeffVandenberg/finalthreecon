@@ -124,9 +124,9 @@ function getSessionId(\GuzzleHttp\Client $client): string
 {
     $loginResponse = $client->post('https://tabletop.events/api/session', [
         'form_params' => [
-            'username' => 'jeffvandenberg',
-            'password' => 'PkExxDxPI5jCT7xp!KDi50Sdc!n',
-            'api_key_id' => '732CF58A-930F-11F0-AB91-06778B8BBAF3',
+            'username' => secret('tte.api_user'),
+            'password' => secret('tte.api_password'),
+            'api_key_id' => secret('tte.api_key'),
         ]
     ]);
 
