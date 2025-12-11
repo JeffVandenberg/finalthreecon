@@ -39,7 +39,6 @@ while ($hasMoreData) {
     // stuff into array
     $page++;
     $hasMoreData = ($eventData['result']['paging']['page_number'] != $eventData['result']['paging']['total_pages']);
-    echo "Getting more data<br />";
 }
 
 // do DB stuffs
