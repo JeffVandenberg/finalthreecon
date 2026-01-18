@@ -2,15 +2,21 @@
 require_once __DIR__ . '/core/bootstrap.php';
 
 // get initial data
-$data = json_decode(file_get_contents('.\static\2025\dayparts_2.json'), true);
+$data = json_decode(file_get_contents('./static/2026/dayparts_1.json'), true);
 
 // setup db connection
 $pdo_conn = require_once 'db_connect.php';
 /* @var $pdo_conn PDO */
 
 $sql = <<<SQL
+TRUNCATE 
+    dayparts;
+SQL;
+$daypartsTruncate = $pdo_conn->exec($sql);
+
+$sql = <<<SQL
 INSERT INTO
-    clocktowercon.dayparts
+    dayparts
     (id, name, start_date, dayname)
 VALUES
     (?, ?, ?, ?);
@@ -27,4 +33,4 @@ foreach($data['result']['items'] as $row) {
     ]);
 }
 
-echo "Done!";
+echo "Imported Day Parts!";

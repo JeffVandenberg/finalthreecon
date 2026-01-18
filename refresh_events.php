@@ -1,7 +1,8 @@
 <?php
 use GuzzleHttp\Psr7\Query;
 
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/core/bootstrap.php';
+
 require_once './cache_bust.php';
 // login
 $client = new GuzzleHttp\Client();
@@ -14,8 +15,11 @@ $loginResponse = $client->post('https://tabletop.events/api/session', [
     ]
 ]);
 
+
 $loginData = json_decode($loginResponse->getBody()->getContents(), true);
 $sessionId = $loginData['result']['id'];
+
+$conventionId = config('tte.convention_id');
 
 // get events
 $hasMoreData = true;
@@ -37,7 +41,7 @@ while ($hasMoreData) {
         '_page_number' => $page
     ];
 
-    $eventResponse = $client->get('https://tabletop.events/api/convention/32D6B730-365B-11EF-B58A-DCC620F8A28C/events', [
+    $eventResponse = $client->get('https://tabletop.events/api/convention/' . $conventionId . '/events', [
         'query' => Query::build($params)
     ]);
 
@@ -51,7 +55,7 @@ while ($hasMoreData) {
 
     // stuff into array
     $page++;
-    $hasMoreData = ($eventData['result']['paging']['page_number'] != $eventData['result']['paging']['total_pages']);
+    $hasMoreData = ($eventData['result']['paging']['page_number'] <= $eventData['result']['paging']['total_pages']);
 }
 
 // save file to temp storage

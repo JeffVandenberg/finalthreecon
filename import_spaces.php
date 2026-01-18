@@ -2,15 +2,21 @@
 require_once __DIR__ . '/core/bootstrap.php';
 
 // get initial data
-$data = json_decode(file_get_contents('.\static\2025\spaces.json'), true);
+$data = json_decode(file_get_contents('./static/2026/spaces.json'), true);
 
 // setup db connection
 $pdo_conn = require_once 'db_connect.php';
 /* @var $pdo_conn PDO */
 
 $sql = <<<SQL
+TRUNCATE 
+    spaces
+SQL;
+$spacesTruncate = $pdo_conn->exec($sql);
+
+$sql = <<<SQL
 INSERT INTO
-    clocktowercon.spaces
+    spaces
     (id, name, room_id, relationships, date_created, date_updated)
 VALUES
     (?, ?, ?, ?, ?, ?);
@@ -29,4 +35,4 @@ foreach($data['result']['items'] as $row) {
     ]);
 }
 
-echo "Done!";
+echo "Imported Spaces!";

@@ -2,15 +2,27 @@
 require_once __DIR__ . '/core/bootstrap.php';
 
 // get initial data
-$data = json_decode(file_get_contents('.\static\2025\room.json'), true);
+$data = json_decode(file_get_contents('./static/2026/rooms.json'), true);
 
 // setup db connection
 $pdo_conn = require_once 'db_connect.php';
 /* @var $pdo_conn PDO */
 
 $sql = <<<SQL
+TRUNCATE 
+    rooms
+SQL;
+$roomTruncate = $pdo_conn->exec($sql);
+
+$sql = <<<SQL
+TRUNCATE
+    room_dayparts
+SQL;
+$roomDayPartTruncate = $pdo_conn->exec($sql);
+
+$sql = <<<SQL
 INSERT INTO
-    clocktowercon.rooms
+    rooms
     (id, name, description, relationships, date_created, date_updated)
 VALUES
     (?, ?, ?, ?, ?, ?);
@@ -19,7 +31,7 @@ $roomInsertStmt = $pdo_conn->prepare($sql);
 
 $sql = <<<SQL
 INSERT INTO
-    clocktowercon.room_dayparts
+    room_dayparts
     (daypart_id, room_id, name, start_date)
 VALUES
     (?, ?, ?, ?);
@@ -46,4 +58,4 @@ foreach($data['result']['items'] as $row) {
     }
 }
 
-echo "Done!";
+echo "Imported Rooms!";

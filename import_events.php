@@ -7,7 +7,7 @@ $pdo_conn = require_once 'db_connect.php';
 
 $sql = <<<SQL
 INSERT INTO
-    clocktowercon.events
+    events
     (id, room_id, space_id, name, event_number, type_id, description, view_uri, startdaypart_id, duration, event_type_id, relationships, events.custom_fields, date_created, date_updated)
 VALUES
     (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
@@ -16,7 +16,7 @@ $spaceInsertStmt = $pdo_conn->prepare($sql);
 
 // get initial data
 for($i = 1; $i < 3; $i++) {
-    $data = json_decode(file_get_contents('.\static\events' . $i . '.json'), true);
+    $data = json_decode(file_get_contents('./static/events' . $i . '.json'), true);
 
     foreach($data['result']['items'] as $row) {
         $eventTypeId = substr($row['_relationships']['type'], 14);
@@ -40,4 +40,4 @@ for($i = 1; $i < 3; $i++) {
     }
 }
 
-echo "Done!";
+echo "Imported Events!";
