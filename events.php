@@ -262,9 +262,6 @@ SQL;
 
     while ($event = $eventsStmt->fetch()) {
         if ($event['room_name']) {
-            echo '<pre>';
-            print_r($event);
-            die();
             // assigned event
             $dateParts = explode(",", $event['end_daypart_ids']);
             foreach ($dateParts as $datePartId) {
