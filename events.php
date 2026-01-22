@@ -10,7 +10,7 @@ $dayparts = getDayparts($pdo_conn);
 
 $assignedEvents = getEvents($pdo_conn);
 
-$rooms = extractRoomsWithSpaces($assignedEvents);
+$rooms = getRooms($pdo_conn);;
 ?>
     <html lang="en">
     <head>
@@ -175,13 +175,15 @@ SQL;
 
     $rooms = [];
     while ($room = $roomResults->fetch()) {
-        $rooms[] = [
-            'room_id' => $room['room_id'],
-            'room_name' => $room['room_name'],
-            'space_id' => $room['space_id'],
-            'space_name' => $room['space_name']
-        ];
+        if(!isset($rooms[$room['room_name']]))
+        {
+            $rooms[$room['room_name']] = [];
+        }
+        $rooms[$room['room_name']][] = $room['space_name'];
+        sort($rooms[$room['room_name']]);;
     }
+
+    ksort($rooms);
     return $rooms;
 }
 
