@@ -18,12 +18,17 @@ $conventionId = config('tte.convention_id');
 
 // get events
 $hasMoreData = true;
-$page = 1;
-$events = [];
+$badges = [];
+$iterationExecutionTime = 50;
+$startTime = $currentTime = microtime(true);
+$atEnd = false;
+$page = (int) ($_GET['page'] ?? 1);
+// validation
+$page = ($page < 1) ? 1 : $page;
 
-while ($hasMoreData) {
+while((($currentTime - $startTime) < $iterationExecutionTime) && !$atEnd) {
     // get request
-    $eventResponse = $client->get('https://tabletop.events/api/convention/' . $conventionId . '/badges', [
+    $response = $client->get('https://tabletop.events/api/convention/' . $conventionId . '/badges', [
         'query' => [
             'session_id' => $sessionId,
             '_include_relationships' => 1,
@@ -32,13 +37,34 @@ while ($hasMoreData) {
         ]
     ]);
 
-    $eventData = json_decode($eventResponse->getBody()->getContents(), true);
+    $contents = $response->getBody()->getContents();
+    $data = json_decode($contents, true);
+    file_put_contents('badges_' . $page . '.json', $contents);
 
-    $events = array_merge_recursive($events, $eventData['result']['items']);
-
-    // stuff into array
+    $atEnd = ($page >= $data['result']['paging']['total_pages']);
+    $currentTime = microtime(true);
     $page++;
-    $hasMoreData = ($eventData['result']['paging']['page_number'] != $eventData['result']['paging']['total_pages']);
+}
+
+// we've reached maxed allowed internal processing time
+// check if we need to redirect to load the next segment
+if(!$atEnd) {
+    header('location: refresh_badges.php?page=' . $page . '&i=' . rand(1, 1000000));
+    exit();
+}
+
+$page = 1;
+$badges = [];
+while(file_exists(getLocalFileName($page))) {
+    $data = json_decode(file_get_contents(getLocalFileName($page)), true);
+    unlink(getLocalFileName($page));
+
+    foreach($data['result']['items'] as $item) {
+        $badges[$item['id']] = $item;
+    }
+
+    // next page
+    $page++;
 }
 
 // do DB stuffs
@@ -60,8 +86,7 @@ SQL;
 $insertStmt = $dbConn->prepare($sql);
 
 // get initial data
-foreach ($events as $row) {
-
+foreach ($badges as $row) {
     $insertStmt->execute([
         $row['id'],
         $row['badgetype_id'] ?? "",
@@ -86,3 +111,12 @@ fclose($f);
 // DONE!
 header('Location: ./index.php');
 echo "<br /><br /><a href=\"./index.php\">Return Home</a>";
+
+/**
+ * @param int $pageNumber
+ * @return string
+ */
+function getLocalFileName(int $pageNumber): string
+{
+    return __DIR__ . DIRECTORY_SEPARATOR . 'badges_' . $pageNumber . '.json';
+}

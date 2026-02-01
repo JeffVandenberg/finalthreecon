@@ -2,12 +2,12 @@
 
 use GuzzleHttp\Exception\GuzzleException;
 
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/core/bootstrap.php';
 
-// setup external helpers
-$client = new GuzzleHttp\Client();
+// setup db connection
 $pdo_conn = require_once 'db_connect.php';
 /* @var $pdo_conn PDO */
+$client = new GuzzleHttp\Client();
 
 // login
 $sessionId = getSessionId($client);

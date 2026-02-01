@@ -1,8 +1,8 @@
 <?php
 
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/core/bootstrap.php';
 
-// setup external helpers
+// setup db connection
 $pdo_conn = require_once 'db_connect.php';
 /* @var $pdo_conn PDO */
 

@@ -52,7 +52,7 @@ $rooms = getRooms($pdo_conn);;
     <body class="bg-white">
     <div class="text-center border-2 border-black rounded p-3 mb-10">
         <div style="float:left;">
-            <a href="/">Report Home</a>
+            <a href="./">Report Home</a>
         </div>
 
         Filters: &nbsp;&nbsp;
@@ -265,7 +265,7 @@ SQL;
     while ($event = $eventsStmt->fetch()) {
         if ($event['room_name']) {
             // assigned event
-            $dateParts = explode(",", $event['end_daypart_ids']);
+            $dateParts = explode(",", $event['end_daypart_ids'] ?? "");
             foreach ($dateParts as $datePartId) {
                 if(is_string($event['custom_fields'])) {
                     $event['custom_fields'] = json_decode($event['custom_fields'], true);

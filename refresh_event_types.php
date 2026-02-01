@@ -1,6 +1,5 @@
 <?php
-require_once 'vendor/autoload.php';
-require_once './cache_bust.php';
+require_once __DIR__ . '/core/bootstrap.php';
 
 // login
 $client = new GuzzleHttp\Client();

@@ -31,7 +31,7 @@ foreach($data['result']['items'] as $row) {
         $row['room_id'],
         json_encode($row['_relationships'] ?? []),
         $row['date_created'],
-        $row['date_updated']
+            $row['date_updated']
     ]);
 }
 

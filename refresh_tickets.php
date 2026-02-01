@@ -1,6 +1,6 @@
 <?php
-require_once 'vendor/autoload.php';
-require_once './cache_bust.php';
+require_once __DIR__ . '/core/bootstrap.php';
+
 
 // get page number from request
 $pageNumber = (int) ($_GET['page'] ?? 1);
@@ -57,7 +57,6 @@ if(!$atEnd) {
 }
 
 // iterate through all files and grab contents
-$events = [];
 $pageNumber = 1;
 
 while(file_exists(getLocalFileName($pageNumber))) {
@@ -65,7 +64,7 @@ while(file_exists(getLocalFileName($pageNumber))) {
     unlink(getLocalFileName($pageNumber));
 
     foreach($data['result']['items'] as $item) {
-        $events[$item['id']] = $item;
+        $tickets[$item['id']] = $item;
     }
 
     // next page
@@ -91,7 +90,7 @@ SQL;
 $insertStmt = $dbConn->prepare($sql);
 
 // get initial data
-foreach ($events as $row) {
+foreach ($tickets as $row) {
     $insertStmt->execute([
         $row['id'],
         $row['event_id'] ?? "",

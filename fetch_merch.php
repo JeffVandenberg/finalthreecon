@@ -1,15 +1,14 @@
 <?php
-//ini_set("display_errors", 1);
-//error_reporting(E_ALL);
-
 use GuzzleHttp\Exception\GuzzleException;
 
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/core/bootstrap.php';
+
+// setup db connection
+$pdo_conn = require_once 'db_connect.php';
+/* @var $pdo_conn PDO */
 
 // setup external helpers
 $client = new GuzzleHttp\Client();
-$pdo_conn = require_once 'db_connect.php';
-/* @var $pdo_conn PDO */
 
 // login
 $sessionId = getSessionId($client);
