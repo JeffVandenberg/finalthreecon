@@ -11,6 +11,8 @@ $dayparts = getDayparts($pdo_conn);
 $assignedEvents = getEvents($pdo_conn);
 
 $rooms = getRooms($pdo_conn);;
+
+$eventTypes = getEventTypes($pdo_conn);
 ?>
     <html lang="en">
     <head>
@@ -64,12 +66,21 @@ $rooms = getRooms($pdo_conn);;
             <option value="saturday">Saturday</option>
             <option value="sunday">Sunday</option>
         </select>
+
+        <label for="event-type-select">Event Type </label>
+        <select name="event_type" id="event-type-select">
+            <option value="all">All</option>
+            <?php foreach ($eventTypes as $id => $name): ?>
+                <option value="<?= $id ?>"><?= e($name) ?></option>
+            <?php endforeach; ?>
+        </select>
+
         <div style="float: right;">
             Last Update: <?= file_get_contents('refresh_time_events') ?> -
             <a href="refresh_events.php" class="button">Refresh Data</a>
         </div>
     </div>
-    <table class="">
+    <table class="" id="event-grid">
         <thead class="sticky top-0 bg-white border-b">
         <tr>
             <th style="min-width: 250px;">
@@ -84,33 +95,33 @@ $rooms = getRooms($pdo_conn);;
         </thead>
         <tbody>
         <?php foreach ($rooms as $roomName => $spaces): ?>
-            <?php foreach($spaces as $spaceName): ?>
-            <tr>
-                <td class="room-leader sticky left-0">
-                    <?= str_replace(" (", "<br />(", $roomName) ?><br/>
-                    (<?= $spaceName; ?>)
-                </td>
-                <?php foreach ($dayparts as $daypart): ?>
-                    <?php if (isset($assignedEvents[$roomName][$spaceName][$daypart['id']])): ?>
-                        <?php
-                        $cellClass = ($assignedEvents[$roomName][$spaceName][$daypart['id']]['grim_needed'] > 0)
-                            ? (($assignedEvents[$roomName][$spaceName][$daypart['id']]['grim_needed'] === 2) ? 'event-grim-req-exp' : 'event-grim-req')
-                            : 'event-scheduled';
-                        ?>
-                        <td class="<?= $cellClass ?> <?= lcfirst($daypart['dayname']) ?>">
-                            <a href="https://tabletop.events<?= $assignedEvents[$roomName][$spaceName][$daypart['id']]['view_uri'] ?>"
-                               target="_blank">
-                                <?= $assignedEvents[$roomName][$spaceName][$daypart['id']]['name'] ?>
-                            </a>
-                        </td>
-                    <?php else: ?>
-                        <td class="event-unscheduled <?= lcfirst($daypart['dayname']) ?>">
-                            ---
-                        </td>
-                    <?php endif; ?>
-                <?php endforeach; ?>
+            <?php foreach($spaces['spaces'] as $spaceName): ?>
+                <tr class="<?= implode(' ', $spaces['event_types']) ?>">
+                    <td class="room-leader sticky left-0">
+                        <?= str_replace(" (", "<br />(", $roomName) ?><br/>
+                        (<?= $spaceName; ?>)
+                    </td>
+                    <?php foreach ($dayparts as $daypart): ?>
+                        <?php if (isset($assignedEvents[$roomName][$spaceName][$daypart['id']])): ?>
+                            <?php
+                            $cellClass = ($assignedEvents[$roomName][$spaceName][$daypart['id']]['grim_needed'] > 0)
+                                    ? (($assignedEvents[$roomName][$spaceName][$daypart['id']]['grim_needed'] === 2) ? 'event-grim-req-exp' : 'event-grim-req')
+                                    : 'event-scheduled';
+                            ?>
+                            <td class="<?= $cellClass ?> <?= lcfirst($daypart['dayname']) ?>">
+                                <a href="https://tabletop.events<?= $assignedEvents[$roomName][$spaceName][$daypart['id']]['view_uri'] ?>"
+                                   target="_blank">
+                                    <?= $assignedEvents[$roomName][$spaceName][$daypart['id']]['name'] ?>
+                                </a>
+                            </td>
+                        <?php else: ?>
+                            <td class="event-unscheduled <?= lcfirst($daypart['dayname']) ?>">
+                                ---
+                            </td>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
 
-            </tr>
+                </tr>
             <?php endforeach; ?>
         <?php endforeach; ?>
         </tbody>
@@ -126,7 +137,7 @@ $rooms = getRooms($pdo_conn);;
         function toggleDisplay(targetDay) {
             if (targetDay === "") {
                 // show all
-                setDisplayForClass('.thursday', 'none');
+                setDisplayForClass('.thursday', 'table-cell');
                 setDisplayForClass('.friday', 'table-cell');
                 setDisplayForClass('.saturday', 'table-cell');
                 setDisplayForClass('.sunday', 'table-cell');
@@ -139,10 +150,32 @@ $rooms = getRooms($pdo_conn);;
             }
         }
 
+        function toggleRoomsDisplay(target_event_type) {
+            const tableBody = document.querySelector('#event-grid tbody');
+            const rows = tableBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                if (target_event_type === "all") {
+                    row.style.display = 'table-row';
+                } else {
+                    if (row.classList.contains(target_event_type)) {
+                        row.style.display = 'table-row';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+
         document.getElementById('day-select').addEventListener('change', function (e) {
             const targetDay = e.target.selectedOptions[0].value;
             toggleDisplay(targetDay);
         });
+
+        document.getElementById('event-type-select').addEventListener('change', function (e) {
+            const targetEventType = e.target.selectedOptions[0].value;
+            toggleRoomsDisplay(targetEventType);
+        })
 
         // set initial visibility
         toggleDisplay("");
@@ -162,10 +195,15 @@ SELECT
     r.id as room_id,
     r.name as room_name,
     s.id as space_id,
-    s.name as space_name
-FROM 
+    s.name as space_name,
+    GROUP_CONCAT(lower(regexp_replace(replace(et.name, ' ', '_'), '[^a-zA-Z0-9_]', '')) SEPARATOR ',') as event_types
+FROM
     rooms AS r
-    LEFT JOIN spaces as s ON r.id = s.room_id
+        LEFT JOIN spaces as s ON r.id = s.room_id
+        LEFT JOIN room_eventtypes AS re ON r.id = re.room_id
+        LEFT JOIN event_types AS et ON re.eventtype_id = et.id
+GROUP BY
+    r.id, r.name, s.id, s.name
 ORDER BY
     r.name,
     s.name
@@ -179,8 +217,9 @@ SQL;
         {
             $rooms[$room['room_name']] = [];
         }
-        $rooms[$room['room_name']][] = $room['space_name'];
-        sort($rooms[$room['room_name']]);;
+        $rooms[$room['room_name']]['spaces'][] = $room['space_name'];
+        $rooms[$room['room_name']]['event_types'] = explode(',', $room['event_types'] ?? '');
+        sort($rooms[$room['room_name']]['spaces']);
     }
 
     ksort($rooms);
@@ -308,4 +347,30 @@ function extractRoomsWithSpaces(array $assignedEvents)
     ksort($rooms);
 
     return $rooms;
+}
+
+/**
+ * @param PDO $pdo_conn
+ * @return array
+ */
+function getEventTypes(PDO $pdo_conn): array
+{
+    $sql = <<<SQL
+SELECT
+    lower(regexp_replace(replace(name, ' ', '_'), '[^a-zA-Z0-9_]', '')) as id,
+    name as name
+FROM
+    event_types
+ORDER BY
+    name
+SQL;
+
+    $eventTypeResults = $pdo_conn->query($sql, PDO::FETCH_ASSOC) or die($pdo_conn->errorCode());
+
+    $eventTypes = [];
+    while ($eventType = $eventTypeResults->fetch()) {
+        $eventTypes[str_replace('-', '_', $eventType['id'])] = $eventType['name'];
+    }
+
+    return $eventTypes;
 }

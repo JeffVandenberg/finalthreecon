@@ -14,6 +14,7 @@ $loginResponse = $client->post('https://tabletop.events/api/session', [
 
 $loginData = json_decode($loginResponse->getBody()->getContents(), true);
 $sessionId = $loginData['result']['id'];
+$conventionId = config('tte.convention_id');
 
 // get events
 $hasMoreData = true;
@@ -22,7 +23,7 @@ $events = [];
 
 while ($hasMoreData) {
     // get request
-    $eventResponse = $client->get('https://tabletop.events/api/convention/32D6B730-365B-11EF-B58A-DCC620F8A28C/eventtypes', [
+    $eventResponse = $client->get('https://tabletop.events/api/convention/' . $conventionId . '/eventtypes', [
         'query' => [
             'session_id' => $sessionId,
             '_include_relationships' => 1,
@@ -72,4 +73,4 @@ fwrite($f, date('Y-m-d H:i:s'));
 fclose($f);
 
 // DONE!
-header('Location: ./index.php');
+header('Location: ./refresh_room_eventtypes.php');
