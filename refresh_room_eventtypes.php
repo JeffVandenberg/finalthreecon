@@ -23,7 +23,6 @@ $client = new Client([
 ]);
 
 // Create session
-echo "Creating TTE API session...\n<br />";
 try {
     $sessionResponse = $client->request('POST', 'session', [
         'form_params' => [
@@ -39,8 +38,6 @@ try {
     if (!$sessionId) {
         die("Failed to retrieve session ID from API response.\n");
     }
-
-    echo "Session created: {$sessionId}\n<br />";
 } catch (GuzzleException $e) {
     die("Failed to create session: " . $e->getMessage() . "\n");
 }
@@ -53,8 +50,6 @@ if (empty($rooms)) {
     die("No rooms found in database. Please run import_rooms.php first.\n");
 }
 
-echo "Found " . count($rooms) . " rooms to process.<br />\n\n";
-
 // Process each room
 $totalEventTypes = 0;
 $processedRooms = 0;
@@ -66,8 +61,6 @@ foreach ($rooms as $room) {
     $roomName = $room['name'];
     $relationships = json_decode($room['relationships'] ?? '{}', true);
 
-    echo "Processing room: {$roomName} ({$roomId})...\n<br />";
-    echo "<br />";
     try {
         // Fetch event types for this room
         $response = $client->request('GET', $relationships['eventtyperooms'], [
@@ -81,7 +74,6 @@ foreach ($rooms as $room) {
         $eventTypes = $data['result']['items'] ?? [];
 
         if (empty($eventTypes)) {
-            echo "  No event types found for this room.\n<br />";
             continue;
         }
 
@@ -104,7 +96,6 @@ foreach ($rooms as $room) {
             }
         }
 
-        echo "  Stored {$roomEventTypeCount} event types.\n<br />";
         $totalEventTypes += $roomEventTypeCount;
         $processedRooms++;
 

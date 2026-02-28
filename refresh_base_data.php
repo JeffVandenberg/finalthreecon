@@ -228,11 +228,13 @@ SQL;
     $spaceInsertStmt = $pdo_conn->prepare($sql);
 
     foreach($dayParts as $row) {
+        $startDate = new DateTime($row['start_date'], new DateTimeZone('UTC'));
+        $startDate->setTimezone(new DateTimeZone('America/New_York'));
         $spaceInsertStmt->execute([
             $row['id'],
-            $row['name'],
-            $row['start_date'],
-            substr($row['name'], 0, strpos($row['name'], ' '))
+            $startDate->format('l') . ' at ' . $startDate->format('g:i a'),
+            $startDate->format('Y-m-d H:i:s'),
+            $startDate->format('l'),
         ]);
     }
 }
