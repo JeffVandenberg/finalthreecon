@@ -52,7 +52,7 @@ $eventTypes = getEventTypes($pdo_conn);
         </style>
     </head>
     <body class="bg-white">
-    <div class="text-center border-2 border-black rounded p-3 mb-10">
+    <div class="text-center border-2 border-black rounded p-3">
         <div style="float:left;">
             <a href="./">Report Home</a>
         </div>
@@ -78,6 +78,17 @@ $eventTypes = getEventTypes($pdo_conn);
         <div style="float: right;">
             Last Update: <?= file_get_contents('refresh_time_events') ?> -
             <a href="refresh_events.php" class="button">Refresh Data</a>
+        </div>
+    </div>
+    <div class="text-center p-3 mb-10">
+        <div class="border-1 event-scheduled table-cell p-3">
+            No Grimoire Required
+        </div>
+        <div class="border-1 event-grim-req table-cell p-3">
+            Basic Grimoire Required
+        </div>
+        <div class="border-1 event-grim-req-exp table-cell p-3">
+            Grimoire Required with Experimental Tokens
         </div>
     </div>
     <table class="" id="event-grid">

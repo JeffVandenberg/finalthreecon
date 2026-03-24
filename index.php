@@ -34,10 +34,6 @@ require_once './cache_bust.php';
     <div class="container float-left w-1/3">
         <h2 class="font-bold text-l">Data Tools</h2>
         <div class="pb-2">
-            <a href="refresh_base_data.php?i=<?= mt_rand(10000000, 99999999); ?>" class="hover:text-red-400">Refresh Base Data</a><br />
-            <span class="text-xs">Last run: <?= file_get_contents('refresh_time_base_data'); ?></span>
-        </div>
-        <div class="pb-2">
             <a href="refresh_badges.php?i=<?= mt_rand(10000000, 99999999); ?>" class="hover:text-red-400">Refresh Badges</a><br />
             <span class="text-xs">Last run: <?= file_get_contents('refresh_time_badges'); ?></span>
         </div>
@@ -63,6 +59,10 @@ require_once './cache_bust.php';
         </div>
         <div class="pb-2">
             <a href="init_db.php?i=<?= mt_rand(10000000, 99999999); ?>" class="hover:text-red-400">Update DB</a>
+        </div>
+        <div class="pb-2">
+            <a href="refresh_base_data.php?i=<?= mt_rand(10000000, 99999999); ?>" class="hover:text-red-400" onclick="confirm('Are you sure you want to refresh base data?')">Refresh Base Data</a><br />
+            <span class="text-xs">Last run: <?= file_get_contents('refresh_time_base_data'); ?></span>
         </div>
     </div>
 </div>
