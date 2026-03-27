@@ -35,13 +35,18 @@ if (WORKER_ONLY) {
     res.json({ status: 'ok', mode: 'worker', timestamp: new Date().toISOString() });
   });
 
-  // Initialize sync job processor
-  import('./jobs/sync.job');
-
-  // Start minimal server for Cloud Run health checks
-  app.listen(PORT, '0.0.0.0', () => {
+  // Start minimal server for Cloud Run health checks first
+  app.listen(PORT, '0.0.0.0', async () => {
     logger.info(`Worker health check server running on port ${PORT}`);
-    logger.info('Bull queue processor initialized and processing jobs');
+
+    // Initialize sync job processor after server starts
+    try {
+      await import('./jobs/sync.job');
+      logger.info('Bull queue processor initialized and processing jobs');
+    } catch (error) {
+      logger.error('Failed to initialize Bull queue processor', error);
+      process.exit(1);
+    }
   });
 
   // Graceful shutdown

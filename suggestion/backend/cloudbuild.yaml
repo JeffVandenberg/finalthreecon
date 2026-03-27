@@ -82,6 +82,11 @@ steps:
       - '--memory=512Mi'
       - '--cpu=1'
       - '--timeout=3600s'
+      - '--startup-cpu-boost'
+      - '--startup-probe-initial-delay=10'
+      - '--startup-probe-period=5'
+      - '--startup-probe-timeout=5'
+      - '--startup-probe-failure-threshold=12'
       - '--concurrency=1'
 
 # Specify images to push to Container Registry
