@@ -158,7 +158,7 @@ export class TTEApiService {
         // Log first item to see what fields are actually returned
         if (page === 1 && items.length > 0) {
           logger.info(`TTE API Response - First item from ${endpoint}:`, {
-            itemKeys: Object.keys(items[0]),
+            itemKeys: Object.keys(items[0] as object),
             sampleItem: items[0]
           });
         }

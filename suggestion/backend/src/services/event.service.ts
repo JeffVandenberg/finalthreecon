@@ -64,7 +64,8 @@ export class EventService {
   }
 
   async getEventById(id: string) {
-    const event = await prisma.event.findUnique({
+    // Note: Using findFirst because events now have composite key (id, spaceId)
+    const event = await prisma.event.findFirst({
       where: { id }
     });
 
@@ -111,16 +112,43 @@ export class EventService {
   }
 
   async updateEvent(id: string, data: any) {
-    // Just update and return the event - frontend can fetch relations if needed
+    // Note: Using findFirst + update because events now have composite key (id, spaceId)
+    const event = await prisma.event.findFirst({
+      where: { id }
+    });
+
+    if (!event) {
+      throw new AppError('Event not found', 404);
+    }
+
     return await prisma.event.update({
-      where: { id },
+      where: {
+        id_spaceId: {
+          id: event.id,
+          spaceId: event.spaceId
+        }
+      },
       data
     });
   }
 
   async deleteEvent(id: string) {
-    return await prisma.event.delete({
+    // Note: Using findFirst + delete because events now have composite key (id, spaceId)
+    const event = await prisma.event.findFirst({
       where: { id }
+    });
+
+    if (!event) {
+      throw new AppError('Event not found', 404);
+    }
+
+    return await prisma.event.delete({
+      where: {
+        id_spaceId: {
+          id: event.id,
+          spaceId: event.spaceId
+        }
+      }
     });
   }
 

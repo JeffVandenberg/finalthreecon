@@ -125,7 +125,7 @@ export class EventAssignmentService {
     const assignments = this.assignEventsIterative(userPrefs, capacities, 'random');
 
     // Create tickets in database
-    const ticketsToCreate = [];
+    const ticketsToCreate: Array<{ badgeId: string; eventId: string; relationships: any }> = [];
     for (const [eventId, badgeIds] of Object.entries(assignments)) {
       for (const badgeId of badgeIds) {
         ticketsToCreate.push({

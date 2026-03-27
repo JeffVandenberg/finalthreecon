@@ -6,8 +6,9 @@ const prisma = new PrismaClient();
 export class TicketService {
   async createTicket(data: { badgeId: string; eventId: string; relationships?: any }) {
     // Check if event exists and get ticket count
+    // Note: Using findFirst because events now have composite key (id, spaceId)
     const [event, ticketCount] = await Promise.all([
-      prisma.event.findUnique({ where: { id: data.eventId } }),
+      prisma.event.findFirst({ where: { id: data.eventId } }),
       prisma.ticket.count({ where: { eventId: data.eventId } })
     ]);
 

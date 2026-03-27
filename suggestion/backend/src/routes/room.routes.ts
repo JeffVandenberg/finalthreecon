@@ -31,13 +31,9 @@ router.get('/:id', async (req, res, next) => {
           include: {
             eventType: true
           }
-        },
-        events: {
-          include: {
-            eventType: true,
-            startDaypart: true
-          }
         }
+        // Note: events relation removed after FK removal
+        // Fetch events separately if needed: prisma.event.findMany({ where: { roomId: room.id } })
       }
     });
     res.json({ data: room });
