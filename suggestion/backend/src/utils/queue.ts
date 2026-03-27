@@ -6,7 +6,19 @@ const redisConfig = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   password: process.env.REDIS_PASSWORD || undefined,
+  tls: process.env.REDIS_HOST?.includes('upstash.io') ? {} : undefined,
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: false,
+  connectTimeout: 10000,
 };
+
+// Log Redis configuration (mask password)
+logger.info('Initializing Bull queue with Redis config:', {
+  host: redisConfig.host,
+  port: redisConfig.port,
+  tls: !!redisConfig.tls,
+  hasPassword: !!redisConfig.password,
+});
 
 // Create sync queue
 export const syncQueue = new Bull('sync-jobs', {
@@ -24,7 +36,11 @@ export const syncQueue = new Bull('sync-jobs', {
 
 // Queue event listeners
 syncQueue.on('error', (error) => {
-  logger.error('Bull queue error:', { error: error.message });
+  logger.error('Bull queue error:', { error: error.message, stack: error.stack });
+});
+
+syncQueue.on('ready', () => {
+  logger.info('Bull queue connected to Redis successfully');
 });
 
 syncQueue.on('failed', (job, error) => {
