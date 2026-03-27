@@ -48,9 +48,8 @@ Thumbs.db
 nodemon.json
 .eslintrc*
 .prettierrc*
-tsconfig.json
 jest.config.js
 
 # Prisma development
-prisma/seed.ts
-prisma/migrations/*.sql
+# Note: Keep migrations - needed for prisma migrate deploy
+# Note: Keep seed.ts - needed for initial database seeding
