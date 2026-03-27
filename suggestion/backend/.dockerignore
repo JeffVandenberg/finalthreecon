@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Testing
+coverage/
+tests/
+*.test.ts
+*.spec.ts
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+
+# CI/CD
+.github/
+
+# Development tools
+nodemon.json
+.eslintrc*
+.prettierrc*
+tsconfig.json
+jest.config.js
+
+# Prisma development
+prisma/seed.ts
+prisma/migrations/*.sql

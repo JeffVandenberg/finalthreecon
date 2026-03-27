@@ -1,0 +1,96 @@
+# Cloud Build configuration for automated deployment
+# Triggers on push to main branch in suggestion/backend/**
+
+steps:
+  # Step 1: Build the Docker container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:latest'
+      - '.'
+    dir: 'suggestion/backend'
+
+  # Step 2: Push the container image to Google Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:latest'
+
+  # Step 3: Run Prisma database migrations
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Get database URL from Secret Manager
+        gcloud secrets versions access latest --secret=database-url > /tmp/db_url
+
+        # Run migrations using the built image
+        docker run --rm \
+          -e DATABASE_URL=$(cat /tmp/db_url) \
+          gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA \
+          sh -c "npx prisma migrate deploy"
+
+        # Clean up
+        rm /tmp/db_url
+
+  # Step 4: Deploy to Cloud Run - API Service
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'finalthreecon-api'
+      - '--image=gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--vpc-connector=finalthreecon-connector'
+      - '--vpc-egress=private-ranges-only'
+      - '--set-secrets=DATABASE_URL=database-url:latest,REDIS_HOST=redis-host:latest,REDIS_PASSWORD=redis-password:latest,JWT_SECRET=jwt-secret:latest,TTE_API_KEY=tte-api-key:latest,TTE_API_PASSWORD=tte-api-password:latest'
+      - '--set-env-vars=NODE_ENV=production,PORT=8080,TTE_API_URL=https://tabletop.events/api,TTE_CONVENTION_ID=D46EFC1C-696B-11F0-B23F-52367E479804,TTE_API_USER=jeffvandenberg,REDIS_PORT=6379,CORS_ORIGIN=https://your-frontend.vercel.app'
+      - '--min-instances=0'
+      - '--max-instances=10'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--timeout=300s'
+      - '--concurrency=80'
+
+  # Step 5: Deploy to Cloud Run - Worker Service (Bull Queue Processor)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'finalthreecon-worker'
+      - '--image=gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--no-allow-unauthenticated'
+      - '--vpc-connector=finalthreecon-connector'
+      - '--vpc-egress=private-ranges-only'
+      - '--set-secrets=DATABASE_URL=database-url:latest,REDIS_HOST=redis-host:latest,REDIS_PASSWORD=redis-password:latest'
+      - '--set-env-vars=NODE_ENV=production,REDIS_PORT=6379,WORKER_ONLY=true'
+      - '--min-instances=1'
+      - '--max-instances=3'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--timeout=3600s'
+      - '--concurrency=1'
+
+# Specify images to push to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/finalthreecon-backend:latest'
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'N1_HIGHCPU_8'
+  timeout: '1200s'

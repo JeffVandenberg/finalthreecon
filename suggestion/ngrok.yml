@@ -1,0 +1,17 @@
+version: "2"
+authtoken: "53pFSnPysD6TPdP5BFBx8_81sDprYh7nCodzDqLc5DL"
+
+tunnels:
+  backend:
+    proto: http
+    addr: 3000
+    inspect: true
+    schemes:
+      - https
+
+  frontend:
+    proto: http
+    addr: 5173
+    inspect: true
+    schemes:
+      - https

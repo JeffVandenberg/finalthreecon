@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model BadgeType {
+  id                    String   @id @default(uuid()) @db.VarChar(36)
+  name                  String   @db.VarChar(100)
+  description           String?  @db.Text
+  price                 Decimal  @db.Decimal(10, 2)
+  maxQuantity           Int      @map("max_quantity")
+  availableQuantity     Int      @map("available_quantity")
+  sellable              Boolean  @default(true)
+  private               Boolean  @default(false)
+  customFields          Json     @map("custom_fields")
+  earlyAccessDate       DateTime? @map("early_access_date")
+  allowEventSubmissions Boolean  @default(true) @map("allow_event_submissions")
+  ticketPurchasesAllowed Boolean @default(true) @map("ticket_purchases_allowed")
+  createdAt             DateTime @default(now()) @map("date_created")
+  updatedAt             DateTime @updatedAt @map("date_updated")
+
+  // Removed: badges relation - FK not needed for sync flexibility
+
+  @@map("badge_types")
+}
+
+model Badge {
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  badgeTypeId     String    @map("badgetype_id") @db.VarChar(36)
+  badgeNumber     Int       @map("badge_number")
+  shortname       String?   @db.VarChar(100)
+  name            String    @db.VarChar(255)
+  badgeDisplayName String?  @map("badge_display_name") @db.VarChar(255)
+  pronouns        String?   @db.VarChar(50)
+  discordName     String?   @map("discord_name") @db.VarChar(100)
+  customFields    Json      @map("custom_fields")
+  userId          String?   @map("user_id") @db.VarChar(36)
+  checkedIn       Boolean   @default(false) @map("checked_in")
+  createdAt       DateTime  @default(now()) @map("date_created")
+  updatedAt       DateTime  @updatedAt @map("date_updated")
+
+  // Removed: badgeType relation - FK not needed for sync flexibility
+  // Removed: tickets relation - FK not needed for sync flexibility
+  badgeLogs       BadgeLog[]
+
+  @@index([badgeTypeId])
+  @@map("badges")
+}
+
+model BadgeLog {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  badgeId       String   @map("badge_id") @db.VarChar(36)
+  commenterName String   @map("commenter_name") @db.VarChar(100)
+  comment       String   @db.VarChar(255)
+  type          String   @db.VarChar(25)
+  createdAt     DateTime @default(now()) @map("date_created")
+  updatedAt     DateTime @updatedAt @map("date_updated")
+
+  badge         Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@index([badgeId])
+  @@fulltext([comment])
+  @@map("badge_logs")
+}
+
+model Space {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  name          String   @db.VarChar(100)
+  roomId        String   @map("room_id") @db.VarChar(36)
+  relationships Json
+  createdAt     DateTime @default(now()) @map("date_created")
+  updatedAt     DateTime @updatedAt @map("date_updated")
+
+  room      Room     @relation(fields: [roomId], references: [id])
+  // Removed: events relation - FK not needed for sync flexibility
+
+  @@index([roomId])
+  @@map("spaces")
+}
+
+model Room {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(255)
+  relationships Json?
+  createdAt   DateTime @default(now()) @map("date_created")
+  updatedAt   DateTime @updatedAt @map("date_updated")
+
+  spaces      Space[]
+  // Removed: events relation - FK not needed for sync flexibility
+  roomDayparts RoomDaypart[]
+  roomEventTypes RoomEventType[]
+
+  @@map("rooms")
+}
+
+model EventType {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  name          String   @db.VarChar(255)
+  relationships Json?
+
+  // Removed: events relation - FK not needed for sync flexibility
+  roomEventTypes RoomEventType[]
+
+  @@map("event_types")
+}
+
+model RoomEventType {
+  roomId      String    @map("room_id") @db.VarChar(36)
+  eventTypeId String    @map("eventtype_id") @db.VarChar(36)
+
+  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  eventType   EventType @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, eventTypeId])
+  @@index([roomId])
+  @@index([eventTypeId])
+  @@map("room_eventtypes")
+}
+
+model Daypart {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  name      String   @db.VarChar(100)
+  dayName   String   @map("day_name") @db.VarChar(25)
+  startDate DateTime @map("start_date")
+
+  // Removed: events relation - FK not needed for sync flexibility
+  roomDayparts RoomDaypart[]
+
+  @@map("dayparts")
+}
+
+model RoomDaypart {
+  roomId    String   @map("room_id") @db.VarChar(36)
+  daypartId String   @map("daypart_id") @db.VarChar(36)
+  name      String   @db.VarChar(100)
+  startDate DateTime @map("start_date")
+
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  daypart   Daypart  @relation(fields: [daypartId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, daypartId])
+  @@index([daypartId])
+  @@map("room_dayparts")
+}
+
+model Event {
+  id              String    @db.VarChar(36)
+  roomId          String    @map("room_id") @db.VarChar(36)
+  spaceId         String    @map("space_id") @db.VarChar(36)
+  eventTypeId     String    @map("event_type_id") @db.VarChar(36)
+  startDaypartId  String?   @map("startdaypart_id") @db.VarChar(36)
+  name            String    @db.VarChar(255)
+  eventNumber     Int       @map("event_number")
+  description     String    @db.Text
+  viewUri         String?   @map("view_uri") @db.VarChar(255)
+  duration        Int
+  hosts           Json
+  customFields    Json      @map("custom_fields")
+  relationships   Json
+  createdAt       DateTime  @default(now()) @map("date_created")
+  updatedAt       DateTime  @updatedAt @map("date_updated")
+
+  // Removed: room, space, eventType, startDaypart relations - FKs not needed for sync flexibility
+  // Removed: tickets relation - FK not needed for sync flexibility
+
+  @@id([id, spaceId])
+  @@index([id])
+  @@index([roomId])
+  @@index([spaceId])
+  @@index([eventTypeId])
+  @@index([startDaypartId])
+  @@map("events")
+}
+
+model Ticket {
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  badgeId       String   @map("badge_id") @db.VarChar(36)
+  eventId       String   @map("event_id") @db.VarChar(36)
+  relationships Json
+  createdAt     DateTime @default(now()) @map("date_created")
+  updatedAt     DateTime @updatedAt @map("date_updated")
+
+  // Removed: badge, event relations - FKs not needed for sync flexibility
+
+  @@index([badgeId])
+  @@index([eventId, badgeId])
+  @@map("tickets")
+}
+
+model Product {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  name      String   @db.VarChar(100)
+  sku       String   @unique @db.VarChar(100)
+  price     Decimal  @db.Decimal(10, 2)
+  quantity  Int
+  createdAt DateTime @default(now()) @map("date_created")
+  updatedAt DateTime @updatedAt @map("date_updated")
+
+  @@map("products")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.VarChar(36)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  name         String   @db.VarChar(255)
+  role         String   @default("user") @db.VarChar(50) // admin, staff, user
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  syncJobs     SyncJob[]
+
+  @@map("users")
+}
+
+model SyncJob {
+  id          String    @id @default(uuid()) @db.VarChar(36)
+  type        String    @db.VarChar(50) // 'base-data', 'events', 'badges', 'tickets', 'event-types', 'all'
+  status      String    @db.VarChar(20) // 'pending', 'active', 'completed', 'failed'
+  progress    Int       @default(0) // Current page number
+  total       Int?      // Total pages (when known)
+  recordCount Int?      @map("record_count") // Total records synced
+  error       String?   @db.Text
+  message     String?   @db.VarChar(255) // Current progress message
+  metadata    Json?     // Additional sync metadata (entity counts, etc.)
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  userId      String    @map("user_id") @db.VarChar(36)
+
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([startedAt])
+  @@map("sync_jobs")
+}
