@@ -7,18 +7,6 @@ import { logger } from './utils/logger';
 import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 
-// Routes
-import authRoutes from './routes/auth.routes';
-import badgeRoutes from './routes/badge.routes';
-import eventRoutes from './routes/event.routes';
-import ticketRoutes from './routes/ticket.routes';
-import roomRoutes from './routes/room.routes';
-import spaceRoutes from './routes/space.routes';
-import eventTypeRoutes from './routes/eventType.routes';
-import daypartRoutes from './routes/daypart.routes';
-import reportRoutes from './routes/report.routes';
-import syncRoutes from './routes/sync.routes';
-
 dotenv.config();
 
 // Worker-only mode: Only run Bull queue processor with minimal HTTP server
@@ -29,6 +17,8 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 
 if (WORKER_ONLY) {
   logger.info('Starting in WORKER ONLY mode - Bull queue processor only');
+  logger.info(`PORT environment variable: ${process.env.PORT}`);
+  logger.info(`Attempting to bind to port ${PORT} on 0.0.0.0`);
 
   // Minimal health check endpoint for Cloud Run
   app.get('/health', (req, res) => {
@@ -36,31 +26,59 @@ if (WORKER_ONLY) {
   });
 
   // Start minimal server for Cloud Run health checks first
-  app.listen(PORT, '0.0.0.0', () => {
-    logger.info(`Worker health check server running on port ${PORT}`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    const addr = server.address();
+    logger.info(`Worker health check server SUCCESSFULLY STARTED`);
+    logger.info(`Listening on ${JSON.stringify(addr)}`);
     logger.info('Server is ready to accept health check requests');
+
+    // Initialize sync job processor asynchronously (non-blocking)
+    // This happens in the background while the HTTP server is already running
+    setImmediate(async () => {
+      try {
+        logger.info('Initializing Bull queue processor...');
+        await import('./jobs/sync.job');
+        logger.info('Bull queue processor initialized and processing jobs');
+      } catch (error: any) {
+        logger.error('Failed to initialize Bull queue processor', {
+          error: error.message,
+          stack: error.stack
+        });
+        // Don't exit - keep health check server running for debugging
+      }
+    });
   });
 
-  // Initialize sync job processor asynchronously (non-blocking)
-  // This happens in the background while the HTTP server is already running
-  (async () => {
-    try {
-      logger.info('Initializing Bull queue processor...');
-      await import('./jobs/sync.job');
-      logger.info('Bull queue processor initialized and processing jobs');
-    } catch (error) {
-      logger.error('Failed to initialize Bull queue processor', error);
-      // Don't exit - keep health check server running for debugging
-    }
-  })();
+  server.on('error', (error: any) => {
+    logger.error('Server error:', {
+      error: error.message,
+      code: error.code,
+      stack: error.stack
+    });
+  });
 
   // Graceful shutdown
   process.on('SIGTERM', () => {
     logger.info('SIGTERM received, shutting down worker gracefully');
-    process.exit(0);
+    server.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
   });
 } else {
   // API mode: Initialize sync job processor and full Express app
+  // Import routes only in API mode to avoid unnecessary initialization
+  const authRoutes = require('./routes/auth.routes').default;
+  const badgeRoutes = require('./routes/badge.routes').default;
+  const eventRoutes = require('./routes/event.routes').default;
+  const ticketRoutes = require('./routes/ticket.routes').default;
+  const roomRoutes = require('./routes/room.routes').default;
+  const spaceRoutes = require('./routes/space.routes').default;
+  const eventTypeRoutes = require('./routes/eventType.routes').default;
+  const daypartRoutes = require('./routes/daypart.routes').default;
+  const reportRoutes = require('./routes/report.routes').default;
+  const syncRoutes = require('./routes/sync.routes').default;
+
   import('./jobs/sync.job');
 
   // Trust proxy headers from ngrok
