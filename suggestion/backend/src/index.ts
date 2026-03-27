@@ -36,18 +36,23 @@ if (WORKER_ONLY) {
   });
 
   // Start minimal server for Cloud Run health checks first
-  app.listen(PORT, '0.0.0.0', async () => {
+  app.listen(PORT, '0.0.0.0', () => {
     logger.info(`Worker health check server running on port ${PORT}`);
+    logger.info('Server is ready to accept health check requests');
+  });
 
-    // Initialize sync job processor after server starts
+  // Initialize sync job processor asynchronously (non-blocking)
+  // This happens in the background while the HTTP server is already running
+  (async () => {
     try {
+      logger.info('Initializing Bull queue processor...');
       await import('./jobs/sync.job');
       logger.info('Bull queue processor initialized and processing jobs');
     } catch (error) {
       logger.error('Failed to initialize Bull queue processor', error);
-      process.exit(1);
+      // Don't exit - keep health check server running for debugging
     }
-  });
+  })();
 
   // Graceful shutdown
   process.on('SIGTERM', () => {
