@@ -74,7 +74,7 @@ steps:
       - '--platform=managed'
       - '--no-allow-unauthenticated'
       - '--vpc-connector=finalthreecon-connector'
-      - '--vpc-egress=private-ranges-only'
+      - '--vpc-egress=all-traffic'
       - '--set-secrets=DATABASE_URL=database-url:latest,REDIS_HOST=redis-host:latest,REDIS_PASSWORD=redis-password:latest'
       - '--set-env-vars=NODE_ENV=production,REDIS_PORT=6379,WORKER_ONLY=true'
       - '--min-instances=1'
@@ -90,7 +90,7 @@ images:
   - 'gcr.io/$PROJECT_ID/finalthreecon-backend:latest'
 
 # Build options
+timeout: '1200s'
 options:
   logging: CLOUD_LOGGING_ONLY
   machineType: 'N1_HIGHCPU_8'
-  timeout: '1200s'
