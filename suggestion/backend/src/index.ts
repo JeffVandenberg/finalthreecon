@@ -41,7 +41,7 @@ if (WORKER_ONLY) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Trust proxy headers from ngrok
 app.set('trust proxy', 1);
