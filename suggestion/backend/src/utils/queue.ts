@@ -14,8 +14,10 @@ if (redisUrl) {
     host: url.hostname,
     port: parseInt(url.port || '6379'),
     password: url.password,
-    username: url.username !== 'default' ? url.username : undefined,
-    tls: url.protocol === 'rediss:' ? {} : undefined,
+    family: 4, // Force IPv4
+    tls: url.protocol === 'rediss:' ? {
+      servername: url.hostname,
+    } : undefined,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     connectTimeout: 30000,
