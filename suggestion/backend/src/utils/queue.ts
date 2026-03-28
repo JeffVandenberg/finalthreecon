@@ -24,12 +24,16 @@ const redisConfig = redisUrl
     };
 
 // Log Redis configuration (mask password)
-logger.info('Initializing Bull queue with Redis config:', {
-  host: redisConfig.host,
-  port: redisConfig.port,
-  tls: !!redisConfig.tls,
-  hasPassword: !!redisConfig.password,
-});
+logger.info('Initializing Bull queue with Redis config:',
+  typeof redisConfig === 'string'
+    ? { url: redisConfig.substring(0, 20) + '...' }
+    : {
+        host: redisConfig.host,
+        port: redisConfig.port,
+        tls: !!redisConfig.tls,
+        hasPassword: !!redisConfig.password,
+      }
+);
 
 // Create sync queue
 export const syncQueue = new Bull('sync-jobs', {
