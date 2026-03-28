@@ -5,29 +5,49 @@ import { logger } from './logger';
 // Support both full Redis URL and separate host/port/password
 const redisUrl = process.env.REDIS_URL;
 
-const redisConfig = redisUrl
-  ? redisUrl // Use full URL if provided (for Upstash rediss://)
-  : {
-      host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT || '6379'),
-      password: process.env.REDIS_PASSWORD || undefined,
-      tls: process.env.REDIS_HOST?.includes('upstash.io')
-        ? { rejectUnauthorized: false }
-        : undefined,
-      maxRetriesPerRequest: null,
-      enableReadyCheck: false,
-      connectTimeout: 30000,
-      retryStrategy: (times: number) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-    };
+let redisConfig: any;
+
+if (redisUrl) {
+  // Parse Upstash rediss:// URL manually for proper TLS configuration
+  const url = new URL(redisUrl);
+  redisConfig = {
+    host: url.hostname,
+    port: parseInt(url.port || '6379'),
+    password: url.password,
+    username: url.username !== 'default' ? url.username : undefined,
+    tls: url.protocol === 'rediss:' ? {} : undefined,
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    connectTimeout: 30000,
+    retryStrategy: (times: number) => {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+  };
+} else {
+  // Legacy separate host/port/password configuration
+  redisConfig = {
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || undefined,
+    tls: process.env.REDIS_HOST?.includes('upstash.io')
+      ? {}
+      : undefined,
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    connectTimeout: 30000,
+    retryStrategy: (times: number) => {
+      const delay = Math.min(times * 50, 2000);
+      return delay;
+    },
+  };
+}
 
 // Log Redis configuration (mask password)
 logger.info('Initializing Bull queue with Redis config:',
   typeof redisConfig === 'string'
-    ? { url: redisConfig.substring(0, 20) + '...' }
-    : {
+      ? { url: redisConfig.substring(0, 20) + '...' }
+      : {
         host: redisConfig.host,
         port: redisConfig.port,
         tls: !!redisConfig.tls,
