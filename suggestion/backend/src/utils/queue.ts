@@ -2,21 +2,26 @@ import Bull from 'bull';
 import { logger } from './logger';
 
 // Redis configuration
-const redisConfig = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
-  tls: process.env.REDIS_HOST?.includes('upstash.io')
-    ? { rejectUnauthorized: false }
-    : undefined,
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-  connectTimeout: 30000,
-  retryStrategy: (times: number) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-};
+// Support both full Redis URL and separate host/port/password
+const redisUrl = process.env.REDIS_URL;
+
+const redisConfig = redisUrl
+  ? redisUrl // Use full URL if provided (for Upstash rediss://)
+  : {
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD || undefined,
+      tls: process.env.REDIS_HOST?.includes('upstash.io')
+        ? { rejectUnauthorized: false }
+        : undefined,
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
+      connectTimeout: 30000,
+      retryStrategy: (times: number) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+    };
 
 // Log Redis configuration (mask password)
 logger.info('Initializing Bull queue with Redis config:', {
