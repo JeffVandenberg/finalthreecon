@@ -15,9 +15,10 @@ if (redisUrl) {
     port: parseInt(url.port || '6379'),
     password: url.password,
     family: 4, // Force IPv4
-    tls: url.protocol === 'rediss:' ? {
-      servername: url.hostname,
-    } : undefined,
+    tls: {}, // test value
+    // tls: url.protocol === 'rediss:' ? {
+    //   servername: url.hostname,
+    // } : undefined,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     connectTimeout: 30000,
