@@ -1,5 +1,6 @@
 import Bull from 'bull';
 import { logger } from './logger';
+import Redis from "ioredis";
 
 // Redis configuration
 // Support both full Redis URL and separate host/port/password
@@ -16,6 +17,8 @@ if (redisUrl) {
     password: url.password,
     tls: url.protocol === 'rediss:' ? {
       servername: url.hostname,
+      minVersion: 'TLSv1.2', // Explicitly set the minimum
+      rejectUnauthorized: true // Ensure we are actually verifying the Upstash cert
     } : undefined,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
@@ -66,7 +69,18 @@ logger.info('Initializing Bull queue with Redis config:',
 
 // Create sync queue
 export const syncQueue = new Bull('sync-jobs', {
-  redis: redisConfig,
+  createClient: (type, config) => {
+    switch (type) {
+      case 'client':
+        return new Redis(redisConfig);
+      case 'subscriber':
+        return new Redis(redisConfig);
+      case 'bclient':
+        return new Redis(redisConfig);
+      default:
+        return new Redis(redisConfig);
+    }
+  },
   defaultJobOptions: {
     attempts: 3,
     backoff: {
@@ -79,6 +93,10 @@ export const syncQueue = new Bull('sync-jobs', {
 });
 
 // Queue event listeners
+syncQueue.on('ready', () => {
+  logger.error('Bull queue ready.');
+});
+
 syncQueue.on('error', (error) => {
   logger.error('Bull queue error:', { error: error.message, stack: error.stack });
 });
