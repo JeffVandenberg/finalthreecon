@@ -20,6 +20,14 @@ if (redisUrl) {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
     connectTimeout: 30000,
+
+    // Keep-alive helps maintain the persistent socket Bull requires
+    keepAlive: 10000,
+
+    // ioredis needs to know how to handle the "default" username
+    // often found in rediss:// links
+    username: url.username || 'default',
+
     retryStrategy: (times: number) => {
       const delay = Math.min(times * 50, 2000);
       return delay;
