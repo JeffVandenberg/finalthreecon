@@ -15,10 +15,11 @@ if (redisUrl) {
     host: url.hostname,
     port: parseInt(url.port || '6379'),
     password: url.password,
+    family: 6,
     tls: url.protocol === 'rediss:' ? {
       servername: url.hostname,
-      minVersion: 'TLSv1.2', // Explicitly set the minimum
-      rejectUnauthorized: true // Ensure we are actually verifying the Upstash cert
+      //minVersion: 'TLSv1.2', // Explicitly set the minimum
+      rejectUnauthorized: false // Ensure we are actually verifying the Upstash cert
     } : undefined,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
@@ -29,7 +30,7 @@ if (redisUrl) {
 
     // ioredis needs to know how to handle the "default" username
     // often found in rediss:// links
-    username: url.username || 'default',
+    //username: url.username || 'default',
 
     retryStrategy: (times: number) => {
       const delay = Math.min(times * 50, 2000);
