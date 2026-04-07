@@ -52,6 +52,8 @@ steps:
     args:
       - '-c'
       - |
+        kubectl apply -f suggestion/backend/k8s/namespace.yaml
+
         DATABASE_URL=$(gcloud secrets versions access latest --secret=database-url)
         REDIS_URL=$(gcloud secrets versions access latest --secret=redis-url)
         JWT_SECRET=$(gcloud secrets versions access latest --secret=jwt-secret)
