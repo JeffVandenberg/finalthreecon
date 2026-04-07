@@ -1,0 +1,108 @@
+# Cloud Build configuration for GKE deployment
+# Replaces the Cloud Run-based cloudbuild.yaml
+# Triggers on push to main branch when files under suggestion/backend/** change
+
+steps:
+  # ── Step 1: Build the Docker image ──────────────────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-image'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:latest'
+      - '.'
+    dir: 'suggestion/backend'
+
+  # ── Step 2: Push image to Container Registry ─────────────────────────────
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+    waitFor: ['build-image']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-image-latest'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/finalthreecon-backend:latest'
+    waitFor: ['build-image']
+
+  # ── Step 3: Configure kubectl to talk to the GKE cluster ─────────────────
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'get-credentials'
+    args:
+      - 'container'
+      - 'clusters'
+      - 'get-credentials'
+      - 'finalthreecon-cluster'
+      - '--region=us-central1'
+      - '--project=$PROJECT_ID'
+    waitFor: ['push-image']
+
+  # ── Step 4: Sync GCP Secret Manager → Kubernetes Secret ──────────────────
+  # This is the bridge between GCP Secret Manager (where secrets live) and
+  # the K8s Secret that pods read from. Re-runs on every deploy so rotated
+  # secrets are always in sync.
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'sync-secrets'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        DATABASE_URL=$(gcloud secrets versions access latest --secret=database-url)
+        REDIS_URL=$(gcloud secrets versions access latest --secret=redis-url)
+        JWT_SECRET=$(gcloud secrets versions access latest --secret=jwt-secret)
+        TTE_API_KEY=$(gcloud secrets versions access latest --secret=tte-api-key)
+        TTE_API_PASSWORD=$(gcloud secrets versions access latest --secret=tte-api-password)
+
+        kubectl create secret generic finalthreecon-secrets \
+          --from-literal=DATABASE_URL="$${DATABASE_URL}" \
+          --from-literal=REDIS_URL="$${REDIS_URL}" \
+          --from-literal=JWT_SECRET="$${JWT_SECRET}" \
+          --from-literal=TTE_API_KEY="$${TTE_API_KEY}" \
+          --from-literal=TTE_API_PASSWORD="$${TTE_API_PASSWORD}" \
+          --namespace=finalthreecon \
+          --dry-run=client -o yaml | kubectl apply -f -
+    waitFor: ['get-credentials']
+
+  # ── Step 5: Update image tags in the K8s manifests and apply ─────────────
+  # sed replaces the IMAGE_TAG placeholder written into the YAML files with the
+  # real commit SHA so every deploy is pinned to an exact image.
+  - name: 'gcr.io/cloud-builders/kubectl'
+    id: 'deploy'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Replace PROJECT_ID and IMAGE_TAG placeholders
+        sed -i "s|gcr.io/PROJECT_ID/finalthreecon-backend:IMAGE_TAG|gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA|g" \
+          suggestion/backend/k8s/api-deployment.yaml \
+          suggestion/backend/k8s/worker-deployment.yaml
+
+        # Apply everything — namespace first so other resources can land in it
+        kubectl apply -f suggestion/backend/k8s/namespace.yaml
+        kubectl apply -f suggestion/backend/k8s/configmap.yaml
+        kubectl apply -f suggestion/backend/k8s/api-deployment.yaml
+        kubectl apply -f suggestion/backend/k8s/worker-deployment.yaml
+        kubectl apply -f suggestion/backend/k8s/api-service.yaml
+        kubectl apply -f suggestion/backend/k8s/api-hpa.yaml
+
+        # Wait for the rollout to complete before Cloud Build marks success
+        kubectl rollout status deployment/finalthreecon-api -n finalthreecon --timeout=300s
+        kubectl rollout status deployment/finalthreecon-worker -n finalthreecon --timeout=300s
+    env:
+      - 'CLOUDSDK_COMPUTE_REGION=us-central1'
+      - 'CLOUDSDK_CONTAINER_CLUSTER=finalthreecon-cluster'
+    waitFor: ['sync-secrets']
+
+images:
+  - 'gcr.io/$PROJECT_ID/finalthreecon-backend:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/finalthreecon-backend:latest'
+
+timeout: '1200s'
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'N1_HIGHCPU_8'

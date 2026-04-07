@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finalthreecon-worker
+  namespace: finalthreecon
+  labels:
+    app: finalthreecon-worker
+    app.kubernetes.io/part-of: finalthreecon
+spec:
+  # Single worker — Bull Queue processes jobs sequentially per queue
+  replicas: 1
+  selector:
+    matchLabels:
+      app: finalthreecon-worker
+  template:
+    metadata:
+      labels:
+        app: finalthreecon-worker
+    spec:
+      containers:
+        - name: worker
+          image: gcr.io/PROJECT_ID/finalthreecon-backend:IMAGE_TAG
+          # WORKER_ONLY=true activates the Bull queue processor path in src/index.ts
+          # It also starts a minimal HTTP server on 8080 for health checks.
+
+          envFrom:
+            - configMapRef:
+                name: finalthreecon-config
+
+          env:
+            - name: WORKER_ONLY
+              value: "true"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: REDIS_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: JWT_SECRET
+            - name: TTE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: TTE_API_KEY
+            - name: TTE_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: TTE_API_PASSWORD
+
+          # src/index.ts starts a minimal HTTP server in WORKER_ONLY mode
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "128m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

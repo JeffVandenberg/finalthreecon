@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: finalthreecon-api
+  namespace: finalthreecon
+  labels:
+    app: finalthreecon-api
+    app.kubernetes.io/part-of: finalthreecon
+  annotations:
+    # GCP provisions a regional external load balancer
+    cloud.google.com/load-balancer-type: "External"
+spec:
+  type: LoadBalancer
+  selector:
+    app: finalthreecon-api
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080

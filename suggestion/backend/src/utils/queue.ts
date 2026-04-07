@@ -15,11 +15,9 @@ if (redisUrl) {
     host: url.hostname,
     port: parseInt(url.port || '6379'),
     password: url.password,
-    family: 6,
+    family: 4,
     tls: url.protocol === 'rediss:' ? {
       servername: url.hostname,
-      //minVersion: 'TLSv1.2', // Explicitly set the minimum
-      rejectUnauthorized: false // Ensure we are actually verifying the Upstash cert
     } : undefined,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,

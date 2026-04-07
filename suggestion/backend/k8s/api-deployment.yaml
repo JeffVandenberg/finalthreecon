@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finalthreecon-api
+  namespace: finalthreecon
+  labels:
+    app: finalthreecon-api
+    app.kubernetes.io/part-of: finalthreecon
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: finalthreecon-api
+  template:
+    metadata:
+      labels:
+        app: finalthreecon-api
+    spec:
+      # Run DB migrations before starting the API.
+      # Uses the same image so Prisma client is always in sync with the app version.
+      initContainers:
+        - name: migrate
+          image: gcr.io/PROJECT_ID/finalthreecon-backend:IMAGE_TAG
+          command: ["npx", "prisma", "migrate", "deploy"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: DATABASE_URL
+
+      containers:
+        - name: api
+          image: gcr.io/PROJECT_ID/finalthreecon-backend:IMAGE_TAG
+          ports:
+            - containerPort: 8080
+
+          # Pull non-secret config from ConfigMap
+          envFrom:
+            - configMapRef:
+                name: finalthreecon-config
+
+          # Pull secrets — these override any matching keys from the ConfigMap
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: REDIS_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: JWT_SECRET
+            - name: TTE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: TTE_API_KEY
+            - name: TTE_API_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: finalthreecon-secrets
+                  key: TTE_API_PASSWORD
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+
+          resources:
+            requests:
+              cpu: "128m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
