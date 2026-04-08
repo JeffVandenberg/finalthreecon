@@ -55,63 +55,46 @@ export class TicketSyncService extends BaseSyncService {
         await this.updateSyncJobProgress(syncJobId, 80, 100, processingMessage);
       }
 
+      // Pre-load valid event and badge IDs outside the transaction to avoid timeout
+      const [eventRows, badgeRows] = await Promise.all([
+        this.prisma.event.findMany({ select: { id: true } }),
+        this.prisma.badge.findMany({ select: { id: true } }),
+      ]);
+      const validEventIds = new Set(eventRows.map((e: { id: string }) => e.id));
+      const validBadgeIds = new Set(badgeRows.map((b: { id: string }) => b.id));
+      logger.info(`Loaded ${validEventIds.size} event IDs and ${validBadgeIds.size} badge IDs for validation`);
+
+      // Filter tickets before entering the transaction
+      let skippedCount = 0;
+      const validTickets = tickets.filter((ticket) => {
+        if (!ticket.event_id || !ticket.badge_id) { skippedCount++; return false; }
+        if (!validEventIds.has(ticket.event_id)) { skippedCount++; return false; }
+        if (!validBadgeIds.has(ticket.badge_id)) { skippedCount++; return false; }
+        return true;
+      });
+
+      if (skippedCount > 0) {
+        logger.info(`Skipped ${skippedCount} tickets (missing event or badge references)`);
+      }
+
       totalRecords = await this.withTransaction(async (prisma) => {
-        // Truncate and replace
         await this.truncateTable('tickets', prisma);
 
-        let insertedCount = 0;
-        let skippedCount = 0;
-
-        // Insert all tickets
-        for (const ticket of tickets) {
-          // Validate that both event and badge exist
-          if (!ticket.event_id || !ticket.badge_id) {
-            skippedCount++;
-            continue;
-          }
-
-          // Check if event exists
-          const eventExists = await prisma.event.findFirst({
-            where: { id: ticket.event_id },
-          });
-
-          if (!eventExists) {
-            logger.debug(`Event ${ticket.event_id} not found for ticket ${ticket.id}, skipping`);
-            skippedCount++;
-            continue;
-          }
-
-          // Check if badge exists
-          const badgeExists = await prisma.badge.findUnique({
-            where: { id: ticket.badge_id },
-          });
-
-          if (!badgeExists) {
-            logger.debug(`Badge ${ticket.badge_id} not found for ticket ${ticket.id}, skipping`);
-            skippedCount++;
-            continue;
-          }
-
+        for (const ticket of validTickets) {
           await prisma.ticket.create({
             data: {
               id: ticket.id,
-              eventId: ticket.event_id,
-              badgeId: ticket.badge_id,
+              eventId: ticket.event_id!,
+              badgeId: ticket.badge_id!,
               relationships: ticket._relationships || {},
               createdAt: ticket.date_created ? new Date(ticket.date_created) : new Date(),
               updatedAt: ticket.date_updated ? new Date(ticket.date_updated) : new Date(),
             },
           });
-
-          insertedCount++;
         }
 
-        if (skippedCount > 0) {
-          logger.info(`Skipped ${skippedCount} tickets (missing event or badge references)`);
-        }
-
-        logger.info(`Synced ${insertedCount} tickets (${skippedCount} skipped)`);
-        return insertedCount;
+        logger.info(`Synced ${validTickets.length} tickets`);
+        return validTickets.length;
       });
 
       // Complete
