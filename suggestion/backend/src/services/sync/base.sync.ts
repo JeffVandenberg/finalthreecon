@@ -106,7 +106,7 @@ export abstract class BaseSyncService {
   ): Promise<T> {
     return await this.prisma.$transaction(async (prisma) => {
       return await operation(prisma);
-    });
+    }, { timeout: 30000 });
   }
 
   /**
