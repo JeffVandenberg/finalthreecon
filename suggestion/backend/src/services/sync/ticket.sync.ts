@@ -71,7 +71,7 @@ export class TicketSyncService extends BaseSyncService {
           }
 
           // Check if event exists
-          const eventExists = await prisma.event.findUnique({
+          const eventExists = await prisma.event.findFirst({
             where: { id: ticket.event_id },
           });
 
