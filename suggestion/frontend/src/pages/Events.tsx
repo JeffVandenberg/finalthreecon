@@ -68,7 +68,7 @@ export default function Events() {
 
         // Hosts (JSON array: [{name: "...", badge_id: "..."}])
         const hosts = Array.isArray(event.hosts) ? event.hosts : []
-        const hostMatch = hosts.some((host) =>
+        const hostMatch = hosts.some((host: { name?: string }) =>
           host.name?.toLowerCase().includes(searchLower)
         )
 

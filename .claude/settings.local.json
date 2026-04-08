@@ -4,7 +4,8 @@
       "Bash(gcloud config:*)",
       "Bash(where gcloud:*)",
       "Read(//c/Users/jeffv/AppData/Local/Google/Cloud SDK//**)",
-      "Read(//c/Program Files \\(x86\\)/Google/**)"
+      "Read(//c/Program Files \\(x86\\)/Google/**)",
+      "Bash(npm run:*)"
     ]
   }
 }
