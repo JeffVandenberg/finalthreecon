@@ -79,8 +79,6 @@ if (WORKER_ONLY) {
   const reportRoutes = require('./routes/report.routes').default;
   const syncRoutes = require('./routes/sync.routes').default;
 
-  import('./jobs/sync.job');
-
   // Trust proxy headers from ngrok
   app.set('trust proxy', 1);
 

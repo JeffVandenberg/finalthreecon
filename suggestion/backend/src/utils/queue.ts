@@ -89,6 +89,11 @@ export const syncQueue = new Bull('sync-jobs', {
     removeOnComplete: 100, // Keep last 100 completed jobs
     removeOnFail: 200, // Keep last 200 failed jobs
   },
+  settings: {
+    guardInterval: 60000,   // Check for delayed jobs every 60s (default: 5s)
+    stalledInterval: 60000, // Check for stalled jobs every 60s (default: 30s)
+    drainDelay: 300,
+  },
 });
 
 // Queue event listeners
