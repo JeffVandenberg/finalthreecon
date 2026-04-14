@@ -111,39 +111,15 @@ $unassignedEvents = [];
 foreach ($events as $row) {
     $eventTypeId = substr($row['_relationships']['type'], 15);
 
-    if ($row['space_id'] != null) {
-        // handle single rooms
-        $spaceName = $row['space_name'];
-
-        $insertStmt->execute([
-            $row['id'],
-            $row['room_id'] ?? "",
-            $row['space_id'],
-            $row['name'],
-            $row['event_number'],
-            $row['type_id'],
-            $row['description'] ?? "",
-            $row['view_uri'],
-            $row['startdaypart_id'],
-            $row['duration'],
-            $eventTypeId,
-            json_encode($row['hosts']),
-            json_encode($row['_relationships']),
-            json_encode($row['custom_fields']),
-            $row['date_created'],
-            $row['date_updated'],
-            $spaceName,
-            $row['room_name'] ?? ""
-        ]);
-    } else if (isset($row['multi_spaces'])) {
-        // handle multi rooms
-        foreach ($row['multi_spaces'] as $spaceName) {
-            $spaceData = $spaces[$spaceName];
+    if((int)$row['is_cancelled'] === 0) {
+        if ($row['space_id'] != null) {
+            // handle single rooms
+            $spaceName = $row['space_name'];
 
             $insertStmt->execute([
                 $row['id'],
-                $spaceData['room_id'] ?? "",
-                $spaceData['space_id'] ?? "",
+                $row['room_id'] ?? "",
+                $row['space_id'],
                 $row['name'],
                 $row['event_number'],
                 $row['type_id'],
@@ -158,18 +134,39 @@ foreach ($events as $row) {
                 $row['date_created'],
                 $row['date_updated'],
                 $spaceName,
-                $spaceData['room_name'] ?? ""
+                $row['room_name'] ?? ""
             ]);
+        } else if (isset($row['multi_spaces'])) {
+            // handle multi rooms
+            foreach ($row['multi_spaces'] as $spaceName) {
+                $spaceData = $spaces[$spaceName];
+
+                $insertStmt->execute([
+                    $row['id'],
+                    $spaceData['room_id'] ?? "",
+                    $spaceData['space_id'] ?? "",
+                    $row['name'],
+                    $row['event_number'],
+                    $row['type_id'],
+                    $row['description'] ?? "",
+                    $row['view_uri'],
+                    $row['startdaypart_id'],
+                    $row['duration'],
+                    $eventTypeId,
+                    json_encode($row['hosts']),
+                    json_encode($row['_relationships']),
+                    json_encode($row['custom_fields']),
+                    $row['date_created'],
+                    $row['date_updated'],
+                    $spaceName,
+                    $spaceData['room_name'] ?? ""
+                ]);
+            }
+        } else {
+            // do nothing with the row
+            $unassignedEvents[] = $row;
         }
-    } else {
-        // do nothing with the row
-        $unassignedEvents[] = $row;
     }
-
-    $spaceName = ($row['space_id'] != null)
-        ? $row['space_name']
-        : implode(',', $row['multi_spaces'] ?? []);
-
 }
 
 $f = fopen('refresh_time_events', 'w+');
